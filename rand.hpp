@@ -11,7 +11,7 @@ int randomLevel(int n, const std::ratio<T1,T2> &r)
 	std::uniform_real_distribution<> uniform_dist(0,1);
 	
 	int newLevel = 1;
-	while(uniform_dist(rd) < (double)r.num / r.den)
+	while(uniform_dist(rd) < (double)r.num / r.den && newLevel < n)
 		++newLevel;
 
 	return MIN(newLevel,n);
