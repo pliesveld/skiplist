@@ -3,62 +3,64 @@
 #include <cstdint>
 #include <cstddef>
 #include <utility>
-//#include <vector>
+#include <memory>
+
+//#include <initializer_list>
 
 #include "rand.hpp"
 
-template<typename KEY,typename T>
-class SkipNode;
+template<typename _Key,typename _Tp>
+class _skip_node_data;
 
 
-template<typename KEY,typename T>
-class SkipHead
+template<typename _Key,typename _Tp>
+class _skip_node_base
 {
 public:
-	SkipNode<KEY,T> **forward;
+	_skip_node_data<_Key,_Tp> **forward;
 
-	SkipHead(int Level) : 
-		forward(new SkipNode<KEY,T>*[Level]) 
-		{  
-			for(int i(0); i < Level; ++i)
-				forward[i] = nullptr;
-		};
-	virtual ~SkipHead() { delete [] forward; }
-	typedef SkipNode<KEY,T> * node_type;
+	_skip_node_base(int _level) : 
+	forward(new _skip_node_data<_Key,_Tp>*[_level]) 
+	{  
+		for(int i(0); i < _level; ++i)
+			forward[i] = nullptr;
+	};
+	virtual ~_skip_node_base() { delete [] forward; }
 
 };
 
-template<typename KEY,typename T>
-class SkipNode : public SkipHead<KEY,T>
+template<typename _Key,typename _Tp>
+class _skip_node_data : public _skip_node_base<_Key,_Tp>
 {
 public:
-	typedef KEY key_type;
-	typedef T mapped_type;
-	//typedef SkipNode<KEY,T> * node_ptr;
+	typedef _Key key_type;
+	typedef _Tp mapped_type;
 
-	SkipNode(const KEY &k, const T &v, int level) : SkipHead<KEY,T>(level), key(k), elem(v) { };
-	KEY key;
-	T elem;
+	_skip_node_data(const _Key &k, const _Tp &v, int level) 
+  : _skip_node_base<_Key,_Tp>(level), key(k), elem(v) { };
+
+	_Key key;
+	_Tp elem;
 public:
 };
 
 
-template<typename KEY, typename T>
-struct SkipListIterator
+template<typename _Key, typename _Tp>
+struct _skip_list_iterator
 {
-	typedef SkipListIterator<KEY,T>     _Self;
-	typedef SkipNode<KEY,T>             _Node;
-	typedef T                           value_type;
-	typedef T*                          pointer;
-	typedef T&                          reference;
+	typedef _skip_list_iterator<_Key,_Tp>     _Self;
+	typedef _skip_node_data<_Key,_Tp>             _Node;
+	typedef _Tp                           value_type;
+	typedef _Tp*                          pointer;
+	typedef _Tp&                          reference;
 	typedef ptrdiff_t                   difference_type;
 	typedef std::forward_iterator_tag   iterator_category;
 	
 	
-	SkipListIterator()
+	_skip_list_iterator()
   : m_node() { }
 
-  SkipListIterator(SkipNode<KEY,T>* n)
+  _skip_list_iterator(_skip_node_data<_Key,_Tp>* n)
 	: m_node(n) { }
 
 	reference
@@ -94,37 +96,68 @@ struct SkipListIterator
 	it_next() const
 	{
 		if(this->m_node)
-			return SkipListIterator(m_node->forward[0]);
+			return _skip_list_iterator(m_node->forward[0]);
 		else
-			return SkipListIterator(0);
+			return _skip_list_iterator(0);
 	}
 	
-	
 	_Node *m_node;
-
 };
 
 
-template<typename KEY,typename T, intmax_t MAXLEVEL = 10,
-         typename COMPARE = std::less<KEY> >
-class SkipListBase
+template<typename _Key,typename _Tp, intmax_t _Maxlevel,
+         typename _Compare, typename _Alloc >
+class _skip_list_base
 {
-	typedef KEY                     key_type;
-	typedef T                       mapped_type;
-	typedef std::pair<const KEY, T> value_type;
-	typedef SkipNode<KEY,T> *       node_ptr;
-	typedef SkipNode<KEY,T>         node_type;
+	typedef _Key                              key_type;
+	typedef _Tp                               mapped_type;
+	typedef std::pair<const _Key, _Tp>        value_type;
+
+	typedef _skip_node_data<_Key,_Tp> *       node_ptr;
+	typedef _skip_node_data<_Key,_Tp>         node_type;
+
+  typedef _Compare                          key_compare;
+	typedef _Alloc                            allocator_type;
+protected:
+
+/* NOT SURE WHERE I AM GOING WITH THIS */
+	typedef typename _Alloc::value_type       _Alloc_value_type;
+	typedef typename _Alloc::template rebind<value_type>::other _Pair_alloc_type;
+	typedef typename _Alloc::template rebind<_skip_node_base<_Key,_Tp> >::other _Node_alloc_type;
+
+/*
+	class value_compare
+  : public std::binary_function<value_type, value_type, bool>
+  {
+    friend class _skip_list_base<_Key,_Tp,_Maxlevel,_Compare,_Alloc>;
+		protected:
+		_Compare comp;
+
+		value_compare(_Compare __c) : comp(__c) { }
+		public:
+		bool
+		operator()(const value_type& __x, const value_type& __y) const
+		{ return comp(__x.first, __y.first); }
+	};
+
+
+	value_compare value_comp;
+*/
 public:
 
-	SkipListBase() : header(MAXLEVEL), level(0) { }
+	_skip_list_base() : header(_Maxlevel), level(0)  { }
 
-	T search(const KEY &key)
+	_Tp search(const _Key &key)
 	{
 		
-		node_ptr x = (SkipNode<KEY,T>*) &header;
+		node_ptr x = (node_ptr) &header;
 		for(int i = level - 1; i >= 0 && x; --i)
 		{
-			while(x->forward[i] && x->forward[i]->key < key)
+			while(x->forward[i] &&
+				m_keycomp(x->forward[i]->key, key))
+/*
+				 x->forward[i]->key < key)
+*/
 				x = x->forward[i];
 		}
 		if(!x || !x->forward[0])
@@ -138,16 +171,15 @@ public:
 		throw 1;
 	}
 
-	void Insert(const KEY &k, const T &v)
+	void Insert(const _Key &k, const _Tp &v)
 	{
-		node_ptr update[MAXLEVEL];
-		//node_ptr x = (node_ptr) &header;
-
-		node_ptr x = (SkipNode<KEY,T>*) &header;
+		node_ptr update[_Maxlevel];
+		node_ptr x = (node_ptr) &header;
 
 		for(int i = level - 1;i >= 0;--i)
 		{
-			while(x->forward[i] && x->forward[i]->key < k)
+			while(x->forward[i] &&
+				m_keycomp(x->forward[i]->key, k))
 				x = x->forward[i];
 			update[i] = x;
 		}
@@ -159,12 +191,12 @@ public:
 		}
 
 		const std::ratio<1,2> r;
-		int newLevel = randomLevel(MAXLEVEL,r);
+		int newLevel = randomLevel(_Maxlevel,r);
 
 		if( newLevel > level )
 		{
 			for(int i = level; i < newLevel;++i)
-				update[i] = (SkipNode<KEY,T>*) &header;
+				update[i] = (_skip_node_data<_Key,_Tp>*) &header;
 			level = newLevel;
 		}
 		x = new node_type(k,v,newLevel);
@@ -174,50 +206,28 @@ public:
 			x->forward[i] = update[i]->forward[i];
 			update[i]->forward[i] = x;
 		}
-/*
-	local update[1..MaxLevel]
-	x := list->header
-	for i := list->level downto 1 do
-		while x->forward[i]->key < searchKey do
-			x:= x->forward[i]
-		update[i] := x
-	
-	x:= x->forward[1]
-	
-	if x->key == searchKey 
-		x->value := newValue
-	else
-		newLevel := randomLevel()
-		if newLevel > list->level
-			for i:= list->level + 1 to newLevel do
-				update[i] := list->header
-			list->level := newLevel
-		x := makeNode(newLevel, searchKey, value)
-		for i := 1 to newLevel do
-			x->forward[i] := update[i]->forward[i]
-			update[i]->forward[i] := x
-*/
 	}
 
-	size_t Delete(const KEY &k)
+	size_t Delete(const _Key &k)
 	{
-		node_ptr update[MAXLEVEL];
-		node_ptr x = (SkipNode<KEY,T>*) &header;
-		//node_ptr x = (SkipNode<KEY,T>*) &header;
+		node_ptr update[_Maxlevel];
+		node_ptr x = (node_ptr) &header;
 
 		for(int i = level - 1;i >= 0;--i)
 		{
-			while(x->forward[i] && x->forward[i]->key < k)
+			while(x->forward[i] &&
+				m_keycomp(x->forward[i]->key, k))
+
 				x = x->forward[i];
 			update[i] = x;
 		}
-	
-		if( x->forward[0] == NULL)
+
+		if(x->forward[0] == NULL)
 			return 0;
 
 		x = x->forward[0];
-
-		if( x->key == k)
+	
+		if(x->key == k)
 		{
 			for(int i(0); i < level;++i)
 			{
@@ -225,30 +235,36 @@ public:
 					break;
 				update[i]->forward[i] = x->forward[i];
 			}
-	
 			delete x;
 
 			while( level > 1 && header.forward[level] == NULL)
 				--level;
-
 			return 1;
 		}
-
 		return 0;
-
 	}
 
 protected:
-	SkipHead<key_type,mapped_type> header;
+	_Compare m_keycomp;
+	_skip_node_base<key_type,mapped_type> header;
 	int level;
 };
 
-template<typename KEY,typename T, intmax_t MAXLEVEL = 10,
-         typename COMPARE = std::less<KEY> >
-class SkipList : public SkipListBase<KEY,T,MAXLEVEL,COMPARE>
+template<typename _Key,typename _Tp, intmax_t _Maxlevel = 10,
+         typename _Compare = std::less<_Key>, typename _Alloc = std::allocator<_Tp> >
+class skip_list : public _skip_list_base<_Key,_Tp,_Maxlevel,_Compare,_Alloc>
 {
+private:
+
+	typedef _skip_list_base<_Key,_Tp, _Maxlevel, _Compare, _Alloc> 			_Base;
+	typedef _skip_node_data<_Key, _Tp>																	_Node;
+	typedef _skip_node_base<_Key, _Tp>																	_Node_base;
+	typedef typename _Base::_Pair_alloc_type                            _Pair_alloc_type;
 public:
-	typedef SkipListIterator<KEY,T> iterator;
+
+
+
+	typedef _skip_list_iterator<_Key,_Tp> iterator;
 
 	iterator
 	begin()

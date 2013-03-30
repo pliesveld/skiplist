@@ -9,7 +9,7 @@ bool test_singlenode()
 
 bool test_list_one_level()
 {
-	SkipList<int,int> l;
+	skip_list<int,int> l;
 
 	int k = 3;
 	int v = 7;
@@ -21,7 +21,7 @@ bool test_list_one_level()
 
 bool test_list_one_level_replace()
 {
-	SkipList<int,int> l;
+	skip_list<int,int> l;
 
 	int k = 3;
 	int v = 7;
@@ -36,7 +36,7 @@ bool test_list_one_level_replace()
 
 void test_list_two_nodes()
 {
-	SkipList<int,int> l;
+	skip_list<int,int> l;
 	l.Insert(2,2);
 	l.Insert(3,3);
 
@@ -44,7 +44,7 @@ void test_list_two_nodes()
 	assert( l.search(3) == 3);
 
 
-	SkipList<int,int> l2;
+	skip_list<int,int> l2;
 	l2.Insert(3,3);
 	l2.Insert(2,2);
 	assert( l2.search(2) == 2);
@@ -54,7 +54,7 @@ void test_list_two_nodes()
 
 void test_list_two_nodes2()
 {
-	SkipList<int,int> l;
+	skip_list<int,int> l;
 
 	int k[2] {1,2};
 	int v[2] {3,4};
@@ -70,7 +70,7 @@ void test_list_two_nodes2()
 
 void test_list_ten_nodes()
 {
-	SkipList<int,int> l;
+	skip_list<int,int> l;
 
 	for(int i(0); i < 10;++i)
 		l.Insert( i, i );
@@ -82,9 +82,9 @@ void test_list_ten_nodes()
 
 void test_delete()
 {
-	SkipList<int,int> l;
-	SkipList<int,int> l2;
-	SkipList<int,int> l3;
+	skip_list<int,int> l;
+	skip_list<int,int> l2;
+	skip_list<int,int> l3;
 
 	for(int i(0); i < 10;++i)
 	{
@@ -137,9 +137,9 @@ void test_delete()
 void test_iterator_interface()
 {
 
-	SkipList<int,int> l;
+	skip_list<int,int> l;
 
-	SkipList<int,int>::iterator it;
+	skip_list<int,int>::iterator it;
 
 	it = l.begin();
 
