@@ -50,8 +50,6 @@ void test_list_two_nodes()
 	assert( l2.search(2) == 2);
 	assert( l2.search(3) == 3);
 
-
-
 }
 
 void test_list_two_nodes2()
@@ -135,6 +133,30 @@ void test_delete()
 }
 
 
+
+void test_iterator_interface()
+{
+
+	SkipList<int,int> l;
+
+	SkipList<int,int>::iterator it;
+
+	it = l.begin();
+
+	assert(l.begin() == l.end());
+	assert(it == l.end());
+	
+
+	for(int i = 1;i <= 3;++i)
+		l.Insert(i,3*i);
+
+	int cnt(0);
+	for(it = l.begin();it != l.end();++it)
+		cnt += *it;
+
+	assert(cnt == 3 + 6 + 9);
+}
+
 int main()
 {
 	test_list_one_level();
@@ -146,5 +168,6 @@ int main()
 	test_list_ten_nodes();
 
 	test_delete();
+	test_iterator_interface();
 	return 0;
 }

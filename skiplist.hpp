@@ -1,22 +1,31 @@
 #ifndef __skiplist_hpp_
 #define __skiplist_hpp_
 #include <cstdint>
-#include <vector>
+#include <cstddef>
+#include <utility>
+//#include <vector>
 
 #include "rand.hpp"
 
 template<typename KEY,typename T>
 class SkipNode;
 
+
 template<typename KEY,typename T>
 class SkipHead
 {
-protected:
 public:
-	SkipHead(int Level) : forward(Level,nullptr) { };
+	SkipNode<KEY,T> **forward;
+
+	SkipHead(int Level) : 
+		forward(new SkipNode<KEY,T>*[Level]) 
+		{  
+			for(int i(0); i < Level; ++i)
+				forward[i] = nullptr;
+		};
+	virtual ~SkipHead() { delete [] forward; }
 	typedef SkipNode<KEY,T> * node_type;
-	std::vector<node_type> forward;
-public:
+
 };
 
 template<typename KEY,typename T>
@@ -25,33 +34,97 @@ class SkipNode : public SkipHead<KEY,T>
 public:
 	typedef KEY key_type;
 	typedef T mapped_type;
+	//typedef SkipNode<KEY,T> * node_ptr;
+
 	SkipNode(const KEY &k, const T &v, int level) : SkipHead<KEY,T>(level), key(k), elem(v) { };
-//private:
-	typedef SkipNode<KEY,T> * node_type;
 	KEY key;
 	T elem;
 public:
 };
 
-template<typename KEY,typename T, intmax_t MAXLEVEL = 10>
-class SkipList
-{
-	typedef KEY key_type;
-	typedef T mapped_type;
-	typedef SkipNode<KEY,T> * node_ptr;
-	typedef SkipNode<KEY,T> node_type;
-public:
-	// operator[]
 
-	SkipList() : header(MAXLEVEL), level(0) { }
+template<typename KEY, typename T>
+struct SkipListIterator
+{
+	typedef SkipListIterator<KEY,T>     _Self;
+	typedef SkipNode<KEY,T>             _Node;
+	typedef T                           value_type;
+	typedef T*                          pointer;
+	typedef T&                          reference;
+	typedef ptrdiff_t                   difference_type;
+	typedef std::forward_iterator_tag   iterator_category;
+	
+	
+	SkipListIterator()
+  : m_node() { }
+
+  SkipListIterator(SkipNode<KEY,T>* n)
+	: m_node(n) { }
+
+	reference
+	operator*() const
+	{ return static_cast<_Node*>(this->m_node)->elem; }
+
+	pointer
+	operator->() const
+	{ return std::__addressof(static_cast<_Node *>(this->m_node)->elem); }
+
+	_Self&
+	operator++()
+	{
+		m_node = m_node->forward[0];
+		return *this;
+	}
+
+	_Self
+	operator++(int)
+	{
+		_Self tmp(*this);
+		m_node = m_node->forward[0];
+		return tmp;
+	}
+
+	bool operator==(const _Self& rhs) const
+	{ return m_node == rhs.m_node; }
+
+	bool operator!=(const _Self&rhs) const
+	{ return m_node != rhs.m_node; }
+
+	_Self
+	it_next() const
+	{
+		if(this->m_node)
+			return SkipListIterator(m_node->forward[0]);
+		else
+			return SkipListIterator(0);
+	}
+	
+	
+	_Node *m_node;
+
+};
+
+
+template<typename KEY,typename T, intmax_t MAXLEVEL = 10,
+         typename COMPARE = std::less<KEY> >
+class SkipListBase
+{
+	typedef KEY                     key_type;
+	typedef T                       mapped_type;
+	typedef std::pair<const KEY, T> value_type;
+	typedef SkipNode<KEY,T> *       node_ptr;
+	typedef SkipNode<KEY,T>         node_type;
+public:
+
+	SkipListBase() : header(MAXLEVEL), level(0) { }
 
 	T search(const KEY &key)
 	{
+		
 		node_ptr x = (SkipNode<KEY,T>*) &header;
 		for(int i = level - 1; i >= 0 && x; --i)
 		{
-			while(x && x->forward[i] 
-					&& x->forward[i]->key < key)
+			while(x->forward[i] && x->forward[i]->key < key)
 				x = x->forward[i];
 		}
 		if(!x || !x->forward[0])
@@ -68,8 +141,9 @@ public:
 	void Insert(const KEY &k, const T &v)
 	{
 		node_ptr update[MAXLEVEL];
-		node_ptr x = (SkipNode<KEY,T>*) &header;
+		//node_ptr x = (node_ptr) &header;
 
+		node_ptr x = (SkipNode<KEY,T>*) &header;
 
 		for(int i = level - 1;i >= 0;--i)
 		{
@@ -129,6 +203,7 @@ public:
 	{
 		node_ptr update[MAXLEVEL];
 		node_ptr x = (SkipNode<KEY,T>*) &header;
+		//node_ptr x = (SkipNode<KEY,T>*) &header;
 
 		for(int i = level - 1;i >= 0;--i)
 		{
@@ -163,10 +238,26 @@ public:
 
 	}
 
-private:
+protected:
 	SkipHead<key_type,mapped_type> header;
 	int level;
 };
 
+template<typename KEY,typename T, intmax_t MAXLEVEL = 10,
+         typename COMPARE = std::less<KEY> >
+class SkipList : public SkipListBase<KEY,T,MAXLEVEL,COMPARE>
+{
+public:
+	typedef SkipListIterator<KEY,T> iterator;
+
+	iterator
+	begin()
+	{ return iterator(this->header.forward[0]); }
+	
+	iterator
+	end()
+	{ return iterator(0); }
+	
+};
 
 #endif
