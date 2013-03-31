@@ -12,7 +12,6 @@
 template<typename _Key,typename _Tp>
 class _skip_node_data;
 
-
 template<typename _Key,typename _Tp>
 class _skip_node_base
 {
@@ -147,9 +146,8 @@ public:
 
 	_skip_list_base() : header(_Maxlevel), level(0)  { }
 
-	_Tp search(const _Key &key)
+	node_ptr _impl_search(const _Key &key)
 	{
-		
 		node_ptr x = (node_ptr) &header;
 		for(int i = level - 1; i >= 0 && x; --i)
 		{
@@ -161,17 +159,16 @@ public:
 				x = x->forward[i];
 		}
 		if(!x || !x->forward[0])
-			throw 1;
+			return NULL;
 
 		x = x->forward[0];
-
 		if(x->key == key)
-			return x->elem;
+			return x;
 
-		throw 1;
+		return NULL;
 	}
 
-	void Insert(const _Key &k, const _Tp &v)
+	void insert(const _Key &k, const _Tp &v)
 	{
 		node_ptr update[_Maxlevel];
 		node_ptr x = (node_ptr) &header;
@@ -190,7 +187,7 @@ public:
 			return;
 		}
 
-		const std::ratio<1,2> r;
+		std::ratio<1,2> r;
 		int newLevel = randomLevel(_Maxlevel,r);
 
 		if( newLevel > level )
@@ -208,7 +205,7 @@ public:
 		}
 	}
 
-	size_t Delete(const _Key &k)
+	size_t erase(const _Key &k)
 	{
 		node_ptr update[_Maxlevel];
 		node_ptr x = (node_ptr) &header;
@@ -262,6 +259,14 @@ private:
 	typedef typename _Base::_Pair_alloc_type                            _Pair_alloc_type;
 public:
 
+/*
+	STL Container comforming functions to implement.
+*/
+// void clear()
+//mapped_type& operator[] (const key_type& k);
+//mapped_type& operator[] (key_type&& k);
+	//(*((this->insert(make_pair(x,mapped_type()))).first)).second
+
 
 
 	typedef _skip_list_iterator<_Key,_Tp> iterator;
@@ -273,6 +278,11 @@ public:
 	iterator
 	end()
 	{ return iterator(0); }
+
+	iterator search(const _Key &k)
+	{
+		return iterator(_Base::_impl_search(k));
+	}
 	
 };
 

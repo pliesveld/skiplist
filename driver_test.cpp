@@ -2,53 +2,59 @@
 #include <cassert>
 
 
-bool test_singlenode()
+void test_singlenode()
 {
 //	SkipNode<int,int> n;
 }
 
-bool test_list_one_level()
+void test_list_one_level()
 {
 	skip_list<int,int> l;
 
 	int k = 3;
 	int v = 7;
 
-	l.Insert(k,v);
+	l.insert(k,v);
+	
+	skip_list<int,int>::iterator it;
 
-	assert( l.search(k) == v);
+	assert( (it = l.search(k)) != l.end() && *it == v);
 }
 
-bool test_list_one_level_replace()
+void test_list_one_level_replace()
 {
 	skip_list<int,int> l;
 
 	int k = 3;
 	int v = 7;
 
-	l.Insert(k,v);
+	l.insert(k,v);
 	v = 10;
-	l.Insert(k,v);
+	l.insert(k,v);
 
-	assert( l.search(k) == v);
+	skip_list<int,int>::iterator it;
+	assert( (it = l.search(k)) != l.end() && *it == v);
 }
 
 
 void test_list_two_nodes()
 {
 	skip_list<int,int> l;
-	l.Insert(2,2);
-	l.Insert(3,3);
+	l.insert(2,2);
+	l.insert(3,3);
 
-	assert( l.search(2) == 2);
-	assert( l.search(3) == 3);
+	skip_list<int,int>::iterator it;
+
+	assert( (it = l.search(2)) != l.end() && *it == 2);
+	assert( (it = l.search(3)) != l.end() && *it == 3);
 
 
 	skip_list<int,int> l2;
-	l2.Insert(3,3);
-	l2.Insert(2,2);
-	assert( l2.search(2) == 2);
-	assert( l2.search(3) == 3);
+	l2.insert(3,3);
+	l2.insert(2,2);
+
+	assert( (it = l2.search(2)) != l2.end() && *it == 2);
+	assert( (it = l2.search(3)) != l2.end() && *it == 3);
 
 }
 
@@ -60,10 +66,12 @@ void test_list_two_nodes2()
 	int v[2] {3,4};
 
 	for(int i(0);i < sizeof(k)/sizeof(int);++i)
-		l.Insert(k[i],v[i]);
+		l.insert(k[i],v[i]);
 
+
+	skip_list<int,int>::iterator it;
 	for(int i(0);i < sizeof(k)/sizeof(int);++i)
-		assert( l.search(k[i]) == v[i] );
+		assert( (it = l.search(k[i])) != l.end() && *it == v[i]);
 
 }
 
@@ -73,10 +81,12 @@ void test_list_ten_nodes()
 	skip_list<int,int> l;
 
 	for(int i(0); i < 10;++i)
-		l.Insert( i, i );
+		l.insert( i, i );
 
+
+	skip_list<int,int>::iterator it;
 	for(int i(0); i < 10;++i)
-		assert( l.search(i) == i);
+		assert( (it = l.search(i)) != l.end() && *it == i);
 }
 
 
@@ -88,48 +98,35 @@ void test_delete()
 
 	for(int i(0); i < 10;++i)
 	{
-		l.Insert( i, i );
-		l2.Insert( i, i );
-		l3.Insert( i, i );
+		l.insert( i, i );
+		l2.insert( i, i );
+		l3.insert( i, i );
 	}
 
-	assert(l.Delete(0) == 1);
-	assert(l2.Delete(9) == 1);
-	assert(l3.Delete(5) == 1);
+
+	skip_list<int,int>::iterator it;
+
+	assert(l.erase(0) == 1);
+	assert(l2.erase(9) == 1);
+	assert(l3.erase(5) == 1);
+
+
 
 	for(int i(1); i < 10;++i)
-		assert( l.search(i) == i);
+		assert( (it = l.search(i)) != l.end() && *it == i);
 
 	for(int i(0); i < 9;++i)
-		assert( l2.search(i) == i);
+		assert( (it = l2.search(i)) != l2.end() && *it == i);
 
 	for(int i(0); i < 10;++i)
 		if( i != 5)
-			assert( l3.search(i) == i);
-	try {
-		l.search(0);
-	}
-	catch(...)
-	{
-		assert(true);
-	}
+			assert( (it = l3.search(i)) != l3.end() && *it == i);
 
-	try {
-		l2.search(9);
-	}
-	catch(...)
-	{
-		assert(true);
-	}
-	try {
-		l3.search(5);
-	}
-	catch(...)
-	{
-		assert(true);
-		return;
-	}
-	throw 4;
+
+	assert( l.search(0) == l.end());
+	assert( l2.search(9) == l.end());
+	assert( l3.search(5) == l.end());
+
 }
 
 
@@ -148,7 +145,7 @@ void test_iterator_interface()
 	
 
 	for(int i = 1;i <= 3;++i)
-		l.Insert(i,3*i);
+		l.insert(i,3*i);
 
 	int cnt(0);
 	for(it = l.begin();it != l.end();++it)
