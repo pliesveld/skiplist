@@ -5,6 +5,9 @@
 #include <utility>
 #include <memory>
 
+#include <vector>
+using std::vector;
+
 //#include <initializer_list>
 
 #include "rand.hpp"
@@ -16,15 +19,17 @@ template<typename _Key,typename _Tp>
 class _skip_node_base
 {
 public:
-	_skip_node_data<_Key,_Tp> **forward;
+	//_skip_node_data<_Key,_Tp> **forward;
+	vector<_skip_node_data<_Key,_Tp> *> forward;
 
 	_skip_node_base(int _level) : 
-	forward(new _skip_node_data<_Key,_Tp>*[_level]) 
+		forward(_level,nullptr)
+	//forward(new _skip_node_data<_Key,_Tp>*[_level]) 
 	{  
 		for(int i(0); i < _level; ++i)
 			forward[i] = nullptr;
 	};
-	virtual ~_skip_node_base() { delete [] forward; }
+	//virtual ~_skip_node_base() { delete [] forward; }
 
 };
 
@@ -145,6 +150,25 @@ protected:
 public:
 
 	_skip_list_base() : header(_Maxlevel), level(0)  { }
+	~_skip_list_base() { _impl_clear(); }
+	void _impl_clear()
+	{ //calling erase on an iterator will cause unnecessary state updates
+		node_ptr x = (node_ptr) &header;
+		node_ptr x_next = header.forward[0];
+		level = 0;
+		for(int i(_Maxlevel-1);i > 0;--i)
+			header.forward[i] = 0;
+
+		if(x_next == NULL)
+			return;
+		x = x_next;
+
+		for(;x_next != NULL;x = x_next)
+		{
+			x_next = x->forward[0];
+			delete x;
+		}
+	}
 
 	node_ptr _impl_search(const _Key &key)
 	{

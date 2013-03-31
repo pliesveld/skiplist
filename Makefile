@@ -1,5 +1,5 @@
 CC=g++
-CFLAGS=-std=c++0x -O0 -Wall -pg
+CFLAGS=-std=c++0x -O0 -Wall -pg -g
 #CC=clang++
 #CFLAGS=-std=c++11 -O3 -Wall
 HINCLUDE=rand.hpp skiplist.hpp
