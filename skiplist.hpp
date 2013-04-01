@@ -5,10 +5,6 @@
 #include <utility>
 #include <memory>
 
-#include <vector>
-using std::vector;
-
-//#include <initializer_list>
 
 #include "rand.hpp"
 
@@ -19,17 +15,15 @@ template<typename _Key,typename _Tp>
 class _skip_node_base
 {
 public:
-	//_skip_node_data<_Key,_Tp> **forward;
-	vector<_skip_node_data<_Key,_Tp> *> forward;
+	_skip_node_data<_Key,_Tp> **forward;
 
 	_skip_node_base(int _level) : 
-		forward(_level,nullptr)
-	//forward(new _skip_node_data<_Key,_Tp>*[_level]) 
+	forward(new _skip_node_data<_Key,_Tp>*[_level]) 
 	{  
 		for(int i(0); i < _level; ++i)
 			forward[i] = nullptr;
 	};
-	//virtual ~_skip_node_base() { delete [] forward; }
+	virtual ~_skip_node_base() { delete [] forward; }
 
 };
 
@@ -124,33 +118,17 @@ class _skip_list_base
 	typedef _Alloc                            allocator_type;
 protected:
 
-/* NOT SURE WHERE I AM GOING WITH THIS */
+/* rebinds for allocator-aware support */
 	typedef typename _Alloc::value_type       _Alloc_value_type;
 	typedef typename _Alloc::template rebind<value_type>::other _Pair_alloc_type;
 	typedef typename _Alloc::template rebind<_skip_node_base<_Key,_Tp> >::other _Node_alloc_type;
 
-/*
-	class value_compare
-  : public std::binary_function<value_type, value_type, bool>
-  {
-    friend class _skip_list_base<_Key,_Tp,_Maxlevel,_Compare,_Alloc>;
-		protected:
-		_Compare comp;
 
-		value_compare(_Compare __c) : comp(__c) { }
-		public:
-		bool
-		operator()(const value_type& __x, const value_type& __y) const
-		{ return comp(__x.first, __y.first); }
-	};
-
-
-	value_compare value_comp;
-*/
 public:
 
 	_skip_list_base() : header(_Maxlevel), level(0)  { }
 	~_skip_list_base() { _impl_clear(); }
+
 	void _impl_clear()
 	{ //calling erase on an iterator will cause unnecessary state updates
 		node_ptr x = (node_ptr) &header;
@@ -177,9 +155,6 @@ public:
 		{
 			while(x->forward[i] &&
 				m_keycomp(x->forward[i]->key, key))
-/*
-				 x->forward[i]->key < key)
-*/
 				x = x->forward[i];
 		}
 		if(!x || !x->forward[0])
@@ -290,8 +265,8 @@ public:
 //mapped_type& operator[] (const key_type& k);
 //mapped_type& operator[] (key_type&& k);
 	//(*((this->insert(make_pair(x,mapped_type()))).first)).second
-
-
+// r-value references
+// std::initializer
 
 	typedef _skip_list_iterator<_Key,_Tp> iterator;
 
