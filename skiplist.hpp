@@ -102,6 +102,88 @@ struct _skip_list_iterator
 	_Node *m_node;
 };
 
+template<typename _Key, typename _Tp>
+struct _skip_list_const_iterator
+{
+	typedef _skip_list_const_iterator<_Key,_Tp>   _Self;
+	typedef const _skip_node_data<_Key,_Tp>             _Node;
+	typedef _skip_list_iterator<_Key,_Tp>         iterator;
+
+	typedef _Tp                           value_type;
+	typedef const _Tp*                    pointer;
+	typedef const _Tp&                    reference;
+	typedef ptrdiff_t                   difference_type;
+	typedef std::forward_iterator_tag   iterator_category;
+
+
+	_skip_list_const_iterator() : m_node() { }
+
+	explicit
+  _skip_list_const_iterator(_skip_node_data<_Key,_Tp>* n)
+	: m_node(n) { }
+
+	_skip_list_const_iterator(const iterator& __iter)
+	: m_node(__iter.m_node) { }
+
+	reference
+	operator*() const
+	{ return static_cast<_Node*>(this->m_node)->elem; }
+	
+	pointer
+	operator->() const
+	{ return std::__addressof(static_cast<_Node*>
+		(this->m_node)->elem); }
+	
+	_Self&
+	operator++()
+	{
+		m_node = m_node->forward[0];
+		return *this;
+	}
+
+	_Self
+	operator++(int)
+	{
+		_Self tmp(*this);
+		m_node = m_node->forward[0];
+		return tmp;
+	}
+
+	bool
+	operator==(const _Self& __rhs) const
+	{ return m_node == __rhs.m_node; }
+
+	bool
+	operator!=(const _Self& __rhs) const
+	{ return m_node != __rhs.m_node; }
+
+	_Self
+	it_next() const
+	{
+		if(this->m_node)
+			return _skip_list_const_iterator(m_node->forward[0]);
+		else
+			return _skip_list_const_iterator(0);
+	}
+
+	const _Node *m_node;
+};
+	
+	
+template<typename _Key, typename _Tp>
+inline bool
+operator==(const _skip_list_iterator<_Key,_Tp> &__x,
+           const _skip_list_const_iterator<_Key,_Tp> &__y)
+{ return __x.m_node == __y.m_node; }
+
+template<typename _Key,typename _Tp>
+inline bool
+operator!=(const _skip_list_iterator<_Key,_Tp> &__x,
+           const _skip_list_const_iterator<_Key,_Tp> &__y)
+{ return __x.m_node != __y.m_node; }
+
+
+
 
 template<typename _Key,typename _Tp, intmax_t _Maxlevel,
          typename _Compare, typename _Alloc >
@@ -123,11 +205,37 @@ protected:
 	typedef typename _Alloc::template rebind<value_type>::other _Pair_alloc_type;
 	typedef typename _Alloc::template rebind<_skip_node_base<_Key,_Tp> >::other _Node_alloc_type;
 
+	struct _skip_list_impl
+	: public _Node_alloc_type
+	{
+		_skip_node_base<key_type,mapped_type> m_head;
+
+		_skip_list_impl()
+			: _Node_alloc_type(), m_head(_Maxlevel)
+		{ }
+
+		_skip_list_impl(const _Node_alloc_type& __a)
+			: _Node_alloc_type(__a), m_head(_Maxlevel)
+		{ }
+
+	};
+
+	_skip_list_impl m_impl;
 
 public:
 
-	_skip_list_base() : header(_Maxlevel), level(0)  { }
+	_skip_list_base() : m_impl(), level(0)  { };
 	~_skip_list_base() { _impl_clear(); }
+
+	_Node_alloc_type&
+	_m_get_Node_allocator()
+	{ return *static_cast<_Node_alloc_type*>(&this->m_impl); }
+
+	_Node_alloc_type&
+	_m_get_Node_allocator() const
+	{ return *static_cast<const _Node_alloc_type*>(&this->m_impl); }
+
+
 
 	void _impl_clear()
 	{ //calling erase on an iterator will cause unnecessary state updates
@@ -269,14 +377,28 @@ public:
 // std::initializer
 
 	typedef _skip_list_iterator<_Key,_Tp> iterator;
+	typedef _skip_list_const_iterator<_Key,_Tp> const_iterator;
 
 	iterator
 	begin()
 	{ return iterator(this->header.forward[0]); }
+
+	const_iterator
+	begin() const
+	{ return const_iterator(this->header.forward[0]); }
 	
 	iterator
 	end()
 	{ return iterator(0); }
+
+	const_iterator
+	end() const
+	{ return const_iterator(0); }
+
+	bool
+	empty() const
+	{ return this->header.forward[0] == NULL; }
+	
 
 	iterator search(const _Key &k)
 	{

@@ -154,6 +154,24 @@ void test_iterator_interface()
 	assert(cnt == 3 + 6 + 9);
 }
 
+
+void test_const_iterator_interface()
+{
+	skip_list<int,int> l;
+
+	skip_list<int,int>::const_iterator it;
+
+	l.insert(3,3);
+	l.insert(4,4);
+	l.insert(5,5);
+
+	int i = 3;
+	for(it = l.begin();it != l.end();++it)
+	{
+		assert(*it == i++);
+	}
+}
+
 int main()
 {
 	test_list_one_level();
@@ -166,5 +184,6 @@ int main()
 
 	test_delete();
 	test_iterator_interface();
+	test_const_iterator_interface();
 	return 0;
 }
