@@ -217,7 +217,6 @@ protected:
 		_skip_list_impl(const _Node_alloc_type& __a)
 			: _Node_alloc_type(__a), m_head(_Maxlevel)
 		{ }
-
 	};
 
 	_skip_list_impl m_impl;
@@ -225,6 +224,10 @@ protected:
 public:
 
 	_skip_list_base() : m_impl(), level(0)  { };
+
+	_skip_list_base(const _Alloc& __a) : m_impl(__a), level(0)  { };
+
+
 	~_skip_list_base() { _impl_clear(); }
 
 	_Node_alloc_type&
@@ -236,14 +239,28 @@ public:
 	{ return *static_cast<const _Node_alloc_type*>(&this->m_impl); }
 
 
+	node_ptr	
+	_M_get_node()
+	{ return _m_get_Node_allocator().allocate(1); }
+
+	template<typename... _Args>
+	node_ptr
+	_M_create_node(_Args&&... __args)
+	{
+		node_ptr __node = this->_M_get_node();
+		_m_get_Node_allocator().construct(__node, std::forward<_Args>(__args)...);
+
+		return __node;
+	}
+
 
 	void _impl_clear()
 	{ //calling erase on an iterator will cause unnecessary state updates
-		node_ptr x = (node_ptr) &header;
-		node_ptr x_next = header.forward[0];
+		node_ptr x = (node_ptr) &m_impl.m_head;
+		node_ptr x_next = m_impl.m_head.forward[0];
 		level = 0;
 		for(int i(_Maxlevel-1);i > 0;--i)
-			header.forward[i] = 0;
+			m_impl.m_head.forward[i] = 0;
 
 		if(x_next == NULL)
 			return;
@@ -258,7 +275,7 @@ public:
 
 	node_ptr _impl_search(const _Key &key)
 	{
-		node_ptr x = (node_ptr) &header;
+		node_ptr x = (node_ptr) &m_impl.m_head;
 		for(int i = level - 1; i >= 0 && x; --i)
 		{
 			while(x->forward[i] &&
@@ -278,7 +295,7 @@ public:
 	void insert(const _Key &k, const _Tp &v)
 	{
 		node_ptr update[_Maxlevel];
-		node_ptr x = (node_ptr) &header;
+		node_ptr x = (node_ptr) &m_impl.m_head;
 
 		for(int i = level - 1;i >= 0;--i)
 		{
@@ -300,7 +317,7 @@ public:
 		if( newLevel > level )
 		{
 			for(int i = level; i < newLevel;++i)
-				update[i] = (_skip_node_data<_Key,_Tp>*) &header;
+				update[i] = (_skip_node_data<_Key,_Tp>*) &m_impl.m_head;
 			level = newLevel;
 		}
 		x = new node_type(k,v,newLevel);
@@ -315,7 +332,7 @@ public:
 	size_t erase(const _Key &k)
 	{
 		node_ptr update[_Maxlevel];
-		node_ptr x = (node_ptr) &header;
+		node_ptr x = (node_ptr) &m_impl.m_head;
 
 		for(int i = level - 1;i >= 0;--i)
 		{
@@ -341,7 +358,7 @@ public:
 			}
 			delete x;
 
-			while( level > 1 && header.forward[level] == NULL)
+			while( level > 1 && m_impl.m_head.forward[level] == NULL)
 				--level;
 			return 1;
 		}
@@ -350,7 +367,6 @@ public:
 
 protected:
 	_Compare m_keycomp;
-	_skip_node_base<key_type,mapped_type> header;
 	int level;
 };
 
@@ -379,13 +395,16 @@ public:
 	typedef _skip_list_iterator<_Key,_Tp> iterator;
 	typedef _skip_list_const_iterator<_Key,_Tp> const_iterator;
 
+	explicit
+	skip_list(const _Alloc& __al = _Alloc()) : _Base(__al) { }
+
 	iterator
 	begin()
-	{ return iterator(this->header.forward[0]); }
+	{ return iterator(this->m_impl.m_head.forward[0]); }
 
 	const_iterator
 	begin() const
-	{ return const_iterator(this->header.forward[0]); }
+	{ return const_iterator(this->m_impl.m_head.forward[0]); }
 	
 	iterator
 	end()
@@ -397,7 +416,7 @@ public:
 
 	bool
 	empty() const
-	{ return this->header.forward[0] == NULL; }
+	{ return this->m_impl.m_head.forward[0] == NULL; }
 	
 
 	iterator search(const _Key &k)
