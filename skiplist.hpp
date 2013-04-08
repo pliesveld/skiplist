@@ -106,15 +106,14 @@ template<typename _Key, typename _Tp>
 struct _skip_list_const_iterator
 {
 	typedef _skip_list_const_iterator<_Key,_Tp>   _Self;
-	typedef const _skip_node_data<_Key,_Tp>             _Node;
+	typedef const _skip_node_data<_Key,_Tp>       _Node;
 	typedef _skip_list_iterator<_Key,_Tp>         iterator;
 
-	typedef _Tp                           value_type;
-	typedef const _Tp*                    pointer;
-	typedef const _Tp&                    reference;
+	typedef _Tp                         value_type;
+	typedef const _Tp*                  pointer;
+	typedef const _Tp&                  reference;
 	typedef ptrdiff_t                   difference_type;
 	typedef std::forward_iterator_tag   iterator_category;
-
 
 	_skip_list_const_iterator() : m_node() { }
 
