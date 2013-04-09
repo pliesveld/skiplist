@@ -24,7 +24,6 @@ struct _skip_node_height<null_skiplist_traits>
 };
 
 
-
 template<typename _Key,typename _Tp>
 class _skip_node_data;
 
@@ -313,6 +312,8 @@ public:
 		return NULL;
 	}
 
+
+
 	void insert(const _Key &k, const _Tp &v)
 	{
 		node_ptr update[_Maxlevel];
@@ -446,5 +447,6 @@ public:
 	}
 	
 };
+
 
 #endif
