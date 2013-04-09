@@ -8,6 +8,23 @@
 
 #include "rand.hpp"
 
+template<typename T>
+struct _skip_node_height
+{
+	constexpr double   nProb() { return T::nProp(); }
+};
+
+struct null_skiplist_traits
+{ };
+
+template<>
+struct _skip_node_height<null_skiplist_traits>
+{
+	constexpr double nProb() { return 0.5; }
+};
+
+
+
 template<typename _Key,typename _Tp>
 class _skip_node_data;
 
@@ -184,7 +201,7 @@ operator!=(const _skip_list_iterator<_Key,_Tp> &__x,
 
 
 
-template<typename _Key,typename _Tp, intmax_t _Maxlevel,
+template<typename _Key,typename _Tp, intmax_t _Maxlevel, typename _NodeProperty,
          typename _Compare, typename _Alloc >
 class _skip_list_base
 {
@@ -197,7 +214,11 @@ class _skip_list_base
 
   typedef _Compare                          key_compare;
 	typedef _Alloc                            allocator_type;
+
+
+	static const _skip_node_height<_NodeProperty>	node_property;
 protected:
+
 
 /* rebinds for allocator-aware support */
 	typedef typename _Alloc::value_type       _Alloc_value_type;
@@ -220,11 +241,12 @@ protected:
 
 	_skip_list_impl m_impl;
 
+	struct _level_gen<_Maxlevel>              level_gen;
 public:
 
-	_skip_list_base() : m_impl(), level(0)  { };
+	_skip_list_base() : m_impl(), level_gen(0.5),level(0)  { };
 
-	_skip_list_base(const _Alloc& __a) : m_impl(__a), level(0)  { };
+	_skip_list_base(const _Alloc& __a) : m_impl(__a), level_gen(node_property.nProb()), level(0)  { };
 
 
 	~_skip_list_base() { _impl_clear(); }
@@ -310,8 +332,7 @@ public:
 			return;
 		}
 
-		std::ratio<1,2> r;
-		int newLevel = randomLevel(_Maxlevel,r);
+		int newLevel = level_gen.randomLevel();
 
 		if( newLevel > level )
 		{
@@ -369,16 +390,17 @@ protected:
 	int level;
 };
 
-template<typename _Key,typename _Tp, intmax_t _Maxlevel = 10,
+template<typename _Key,typename _Tp, intmax_t _Maxlevel = 10, typename _NodeProperty = null_skiplist_traits,
          typename _Compare = std::less<_Key>, typename _Alloc = std::allocator<_Tp> >
-class skip_list : public _skip_list_base<_Key,_Tp,_Maxlevel,_Compare,_Alloc>
+class skip_list : public _skip_list_base<_Key,_Tp,_Maxlevel,_NodeProperty,_Compare,_Alloc>
 {
 private:
 
-	typedef _skip_list_base<_Key,_Tp, _Maxlevel, _Compare, _Alloc> 			_Base;
+	typedef _skip_list_base<_Key,_Tp, _Maxlevel, _NodeProperty, _Compare, _Alloc> 			_Base;
 	typedef _skip_node_data<_Key, _Tp>																	_Node;
 	typedef _skip_node_base<_Key, _Tp>																	_Node_base;
 	typedef typename _Base::_Pair_alloc_type                            _Pair_alloc_type;
+
 public:
 
 /*
