@@ -52,8 +52,8 @@ void _skip_list_base<_Key,_Tp,_Maxlevel,_NodeProperty,_Compare,_Alloc>::insert(c
 			update[i] = (_skip_node_data<_Key,_Tp>*) &m_impl.m_head;
 		level = newLevel;
 	}
-x = new node_type(k,v,newLevel);
-//	x = _M_create_node(k,v,newLevel);
+
+	x = _M_create_node(k,v,newLevel);
 	
 	for(int i = 0; i < newLevel;++i)
 	{
@@ -101,7 +101,7 @@ size_t _skip_list_base<_Key,_Tp,_Maxlevel,_NodeProperty,_Compare,_Alloc>::erase(
 }
 
 template<typename _Key,typename _Tp, intmax_t _Maxlevel, typename _NodeProperty, typename _Compare, typename _Alloc >
-void _skip_list_base<_Key,_Tp,_Maxlevel,_NodeProperty,_Compare,_Alloc>::_impl_clear()
+void _skip_list_base<_Key,_Tp,_Maxlevel,_NodeProperty,_Compare,_Alloc>::_impl_erase_after(node_ptr __pos)
 {
 	node_ptr x = (node_ptr) &m_impl.m_head;
 	node_ptr x_next = m_impl.m_head.forward[0];
@@ -116,7 +116,7 @@ void _skip_list_base<_Key,_Tp,_Maxlevel,_NodeProperty,_Compare,_Alloc>::_impl_cl
 	for(;x_next != NULL;x = x_next)
 	{
 		x_next = x->forward[0];
-		delete x;
+		_M_destroy_node(x);
 	}
 }
 

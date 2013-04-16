@@ -63,8 +63,8 @@ public:
 template<typename _Key, typename _Tp>
 struct _skip_list_iterator
 {
-	typedef _skip_list_iterator<_Key,_Tp>     _Self;
-	typedef _skip_node_data<_Key,_Tp>             _Node;
+	typedef _skip_list_iterator<_Key,_Tp> _Self;
+	typedef _skip_node_data<_Key,_Tp>     _Node;
 	typedef _Tp                           value_type;
 	typedef _Tp*                          pointer;
 	typedef _Tp&                          reference;
@@ -223,7 +223,7 @@ protected:
 /* rebinds for allocator-aware support */
 	typedef typename _Alloc::value_type       _Alloc_value_type;
 	typedef typename _Alloc::template rebind<value_type>::other _Pair_alloc_type;
-	typedef typename _Alloc::template rebind<_skip_node_base<_Key,_Tp> >::other _Node_alloc_type;
+	typedef typename _Alloc::template rebind<_skip_node_data<_Key,_Tp> >::other _Node_alloc_type;
 
 	struct _skip_list_impl
 	: public _Node_alloc_type
@@ -249,7 +249,7 @@ public:
 	_skip_list_base(const _Alloc& __a) : m_impl(__a), level_gen(node_property.nProb()), level(0)  { };
 
 
-	~_skip_list_base() { _impl_clear(); }
+	~_skip_list_base() { _impl_erase_after((node_ptr)&m_impl.m_head); }
 
 	_Node_alloc_type&
 	_m_get_Node_allocator()
@@ -259,10 +259,18 @@ public:
 	_m_get_Node_allocator() const
 	{ return *static_cast<const _Node_alloc_type*>(&this->m_impl); }
 
-
 	node_ptr	
 	_M_get_node()
-	{ return _m_get_Node_allocator().allocate(1); }
+	{	return _m_get_Node_allocator().allocate(1); }
+
+	void _M_put_node(node_ptr __p)
+	{ 	_m_get_Node_allocator().deallocate(__p,1); }
+
+	void _M_destroy_node(node_ptr __p)
+	{
+		_m_get_Node_allocator().destroy(__p);
+		_M_put_node(__p);
+	}
 
 	template<typename... _Args>
 	node_ptr
@@ -270,14 +278,30 @@ public:
 	{
 		node_ptr __node = this->_M_get_node();
 		_m_get_Node_allocator().construct(__node, std::forward<_Args>(__args)...);
-
 		return __node;
 	}
 
-
-	void     _impl_clear();
+	/*
+		Erase nodes from the start pos to the end.
+  */
+	void     _impl_erase_after(node_ptr __pos);
+	
+	/*
+		Returns a pointer to node that contains the key.
+		if no node is found, NULL is returned
+	*/
 	node_ptr _impl_search(const _Key &key);
+
+  /*
+		Inserts a new node into the skiplist.  If a node is found
+		with key, its value is replaced with v.
+  */
 	void     insert(const _Key &k, const _Tp &v);
+
+	/*
+		destroys and dellocates the node containing k.
+		0 returned if no node is found.
+  */
 	size_t   erase(const _Key &k);
 
 protected:
