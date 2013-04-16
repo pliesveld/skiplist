@@ -5,9 +5,22 @@
 #include <utility>
 #include <memory>
 
-
 #include "rand.hpp"
+/*
+	A c++11x implementation of Skiplist.  
+	@author Patrick Liesveld
 
+	See William Pugh, Skip Lists: A Probabilistic Alternative to Balanced Trees, CACM, 33(6):668-676, June 1990.
+	More information: http://xlinux.nist.gov/dads/HTML/skiplist.html
+*/
+
+
+
+/*
+	trait expects a constexpr function nProb() 
+  that returns the probabilitiy of increasing the height
+	of a new node inserted into the skiplist.
+*/
 
 template<typename T>
 struct _skip_node_height
@@ -18,16 +31,24 @@ struct _skip_node_height
 struct null_skiplist_traits
 { };
 
+/*
+	default height probability
+ */
 template<>
 struct _skip_node_height<null_skiplist_traits>
 {
 	constexpr double nProb() { return 0.5; }
 };
 
-
 template<typename _Key,typename _Tp>
 class _skip_node_data;
 
+/*
+	A node in a skiplist has a level,a constant number of internal pointers.
+	Nodes are stored in a sorted order.  Two consecutive nodes of the same height 
+  will have level pointer of the first node point to the second node.  If the first
+  node has a higher level, each pointer points to a node that is greater than the second.
+*/
 template<typename _Key,typename _Tp>
 class _skip_node_base
 {
@@ -41,7 +62,6 @@ public:
 			forward[i] = nullptr;
 	};
 	virtual ~_skip_node_base() { delete [] forward; }
-
 };
 
 template<typename _Key,typename _Tp>
@@ -199,7 +219,18 @@ operator!=(const _skip_list_iterator<_Key,_Tp> &__x,
 { return __x.m_node != __y.m_node; }
 
 
+/*
+	Skiplist base class.
+	
+	template arguments:
+	@_Key: type of the key.  unique.  must have comparison and equality operators.
+	@_Tp:  type of the value.
+	@_Maxlevel:  maximum height of the skiplist.
+	@_NodeProperty: traits class used to configure the node height probability
+	@_Compare:  comparison function to use for @_Key
+	@_Alloc:    allocator to use for nodes
 
+*/
 
 template<typename _Key,typename _Tp, intmax_t _Maxlevel, typename _NodeProperty,
          typename _Compare, typename _Alloc >
@@ -249,6 +280,17 @@ public:
 	_skip_list_base(const _Alloc& __a) : m_impl(__a), level_gen(node_property.nProb()), level(0)  { };
 
 
+	_skip_list_base(_skip_list_base const &rhs) : m_impl(rhs.m_impl), level_gen(node_property.nProb()), level(rhs.level) 
+	{
+		node_ptr p = static_cast<node_ptr>(this->m_impl.m_head.forward[0]);
+		while(p != NULL)
+		{
+			this->insert(p->key,p->elem);
+			p = p->forward[0];
+		}
+	}
+
+
 	~_skip_list_base() { _impl_erase_after((node_ptr)&m_impl.m_head); }
 
 	_Node_alloc_type&
@@ -263,14 +305,14 @@ public:
 	_M_get_node()
 	{	return _m_get_Node_allocator().allocate(1); }
 
-	void _M_put_node(node_ptr __p)
-	{ 	_m_get_Node_allocator().deallocate(__p,1); }
-
 	void _M_destroy_node(node_ptr __p)
 	{
 		_m_get_Node_allocator().destroy(__p);
 		_M_put_node(__p);
 	}
+
+	void _M_put_node(node_ptr __p)
+	{ 	_m_get_Node_allocator().deallocate(__p,1); }
 
 	template<typename... _Args>
 	node_ptr
@@ -285,6 +327,7 @@ public:
 		Erase nodes from the start pos to the end.
   */
 	void     _impl_erase_after(node_ptr __pos);
+	//void     _impl_erase_after(node_ptr __pos, node_ptr __end);
 	
 	/*
 		Returns a pointer to node that contains the key.
@@ -297,6 +340,7 @@ public:
 		with key, its value is replaced with v.
   */
 	void     insert(const _Key &k, const _Tp &v);
+	//pair<iterator,bool> insert(const _Key &k, const _Tp &v);
 
 	/*
 		destroys and dellocates the node containing k.
@@ -325,7 +369,6 @@ public:
 /*
 	STL Container comforming functions to implement.
 */
-// void clear()
 //mapped_type& operator[] (const key_type& k);
 //mapped_type& operator[] (key_type&& k);
 	//(*((this->insert(make_pair(x,mapped_type()))).first)).second
@@ -335,8 +378,37 @@ public:
 	typedef _skip_list_iterator<_Key,_Tp> iterator;
 	typedef _skip_list_const_iterator<_Key,_Tp> const_iterator;
 
+	/* 
+		Default constructor.  Initialize skiplist with zero elements.
+  */
 	explicit
 	skip_list(const _Alloc& __al = _Alloc()) : _Base(__al) { }
+
+  /*
+		Copy Constructor
+ 	*/
+	skip_list(skip_list const &rhs) : _Base(rhs) { }
+	
+	/*
+		Move Constructor
+   */
+
+	/*
+		assignment operator
+ 	*/
+	skip_list& operator=(skip_list const &rhs)
+	{ //note: what if skip_list has a different _Maxlevel
+		if(this == &rhs)
+			return *this;
+
+		this->level = rhs.level;
+		for(int i(0); i < _Maxlevel;++i)
+		{
+			this->m_impl.m_head.forward[i] = rhs.m_impl.m_head.forward[i];
+			rhs.m_impl.m_head.forward[i] = NULL;
+		}
+		return *this;
+	}
 
 	iterator
 	begin()

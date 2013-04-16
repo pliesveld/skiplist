@@ -65,12 +65,12 @@ void test_list_two_nodes2()
 	int k[2] {1,2};
 	int v[2] {3,4};
 
-	for(int i(0);i < sizeof(k)/sizeof(int);++i)
+	for(size_t i(0);i < sizeof(k)/sizeof(int);++i)
 		l.insert(k[i],v[i]);
 
 
 	skip_list<int,int>::iterator it;
-	for(int i(0);i < sizeof(k)/sizeof(int);++i)
+	for(size_t i(0);i < sizeof(k)/sizeof(int);++i)
 		assert( (it = l.search(k[i])) != l.end() && *it == v[i]);
 
 }
@@ -172,6 +172,48 @@ void test_const_iterator_interface()
 	}
 }
 
+void test_copy_constructor()
+{
+	skip_list<int,int> l;
+	skip_list<int,int>::const_iterator it;
+
+	l.insert(3,3);
+	l.insert(4,4);
+	l.insert(5,5);
+
+	skip_list<int,int> l2(l);
+	int i = 3;
+	for(it = l2.begin();it != l2.end();++it)
+	{
+		assert(*it == i++);
+	}
+
+}
+
+
+void test_assignment_op()
+{
+	skip_list<int,int> l;
+	skip_list<int,int> l2;
+
+
+	skip_list<int,int>::const_iterator it;
+
+	l.insert(3,3);
+	l.insert(4,4);
+	l.insert(5,5);
+
+	l2 = l;
+	int i = 3;
+		for(it = l2.begin();it != l2.end();++it)
+	{
+		assert(*it == i++);
+	}
+
+	assert(l.empty());
+
+}
+
 int main()
 {
 	test_list_one_level();
@@ -185,5 +227,6 @@ int main()
 	test_delete();
 	test_iterator_interface();
 	test_const_iterator_interface();
+	test_assignment_op();
 	return 0;
 }
