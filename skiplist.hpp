@@ -74,6 +74,14 @@ public:
 	_skip_node_data(const _Key &k, const _Tp &v, int level) 
   : _skip_node_base<_Key,_Tp>(level), key(k), elem(v) { };
 
+#if 0
+	template<typename... _Args>
+		_skip_node_data(int level, _Args&&... __args) :
+			_skip_node_base<_Key,_Tp>(level), elem(std::forward<_Args>(__args)...) { };
+#endif
+
+
+
 	_Key key;
 	_Tp elem;
 public:
