@@ -53,7 +53,7 @@ void _skip_list_base<_Key,_Tp,_Maxlevel,_NodeProperty,_Compare,_Alloc>::insert(c
 		level = newLevel;
 	}
 
-	x = _M_create_node(k,v,newLevel);
+	x = _M_create_node(newLevel,k,v);
 	
 	for(int i = 0; i < newLevel;++i)
 	{

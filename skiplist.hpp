@@ -70,9 +70,17 @@ class _skip_node_data : public _skip_node_base<_Key,_Tp>
 public:
 	typedef _Key key_type;
 	typedef _Tp mapped_type;
+	_skip_node_data(int level,const _Key &k, const _Tp &v) 
+  : _skip_node_base<_Key,_Tp>(level), 
+		key(k), elem(v) { };
 
-	_skip_node_data(const _Key &k, const _Tp &v, int level) 
-  : _skip_node_base<_Key,_Tp>(level), key(k), elem(v) { };
+
+#if 0
+	_skip_node_data(int level, _Key &&k, _Tp &&v) 
+  : _skip_node_base<_Key,_Tp>(level), 
+		key(std::forward<_Key>(k)), 
+		elem(std::forward<_Tp>(v)) { };
+#endif
 
 #if 0
 	template<typename... _Args>
@@ -347,7 +355,7 @@ public:
 		Inserts a new node into the skiplist.  If a node is found
 		with key, its value is replaced with v.
   */
-	void     insert(const _Key &k, const _Tp &v);
+	void     insert(const _Key &k,const _Tp &v);
 	//pair<iterator,bool> insert(const _Key &k, const _Tp &v);
 
 	/*
