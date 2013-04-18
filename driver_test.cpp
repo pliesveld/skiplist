@@ -214,6 +214,97 @@ void test_assignment_op()
 
 }
 
+
+enum Cntr
+{
+	CTOR = 0,
+	DTOR = 1,
+	LVALUE_CTOR = 2,
+	RVALUE_CTOR = 3,
+	LVALUE_ASSIGN = 4,
+	RVALUE_ASSIGN = 5
+};
+
+static int cnt[6];
+
+void test_custom_types()
+{
+	for(int i = 0;i < 6;++i)
+		cnt[i] = 0;
+
+	struct MyData
+	{
+		MyData(int _i) : c(_i) { ++cnt[CTOR]; }
+		MyData(MyData const &rhs)
+			: c(rhs.c), w(rhs.w), data(nullptr)
+		{
+			if(rhs.data)
+			{
+				data = new int(*rhs.data);
+			}
+			++cnt[LVALUE_CTOR];
+
+		}
+
+		MyData(MyData &&rhs)
+		{
+			this->data = std::move(rhs.data);
+			rhs.data = 0;
+			++cnt[RVALUE_CTOR];
+		}
+
+		MyData& operator=(MyData const &rhs)
+		{
+			if(this == &rhs)
+				return *this;
+
+			if(rhs.data)
+			{
+				data = new int(*rhs.data);
+			}
+			return *this;
+			++cnt[LVALUE_ASSIGN];
+		}
+
+		MyData& operator=(MyData &&rhs)
+		{
+			++cnt[RVALUE_ASSIGN];
+			return *this;
+		}
+
+		virtual ~MyData()
+		{
+			++cnt[DTOR];
+			if(data)
+				delete data;
+		}
+
+
+		char a[3];
+		int c;
+		double w;
+		int *data = nullptr;
+	};
+
+	{
+		skip_list<int,MyData> l;
+		l.insert(0,MyData(0));
+		l.insert(1,MyData(1));
+		l.insert(2,MyData(2));
+
+		assert(cnt[CTOR] == 3);
+		for(int i(0);i < 3;++i)
+		{
+			auto it = l.search(i);
+			assert(it != l.end());
+			assert(it->c == i);
+		}
+	}
+	
+	assert(cnt[DTOR] == 6);
+}
+
+
 int main()
 {
 	test_list_one_level();
@@ -228,5 +319,6 @@ int main()
 	test_iterator_interface();
 	test_const_iterator_interface();
 	test_assignment_op();
+	test_custom_types();
 	return 0;
 }

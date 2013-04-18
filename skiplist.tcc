@@ -25,7 +25,7 @@ _skip_node_data<_Key,_Tp>* _skip_list_base<_Key,_Tp,_Maxlevel,_NodeProperty,_Com
 
 
 template<typename _Key,typename _Tp, intmax_t _Maxlevel, typename _NodeProperty, typename _Compare, typename _Alloc >
-void _skip_list_base<_Key,_Tp,_Maxlevel,_NodeProperty,_Compare,_Alloc>::insert(const _Key &k, const _Tp &v)
+void _skip_list_base<_Key,_Tp,_Maxlevel,_NodeProperty,_Compare,_Alloc>::insert(_Key const &k, _Tp const &v)
 {
 	node_ptr update[_Maxlevel];
 	node_ptr x = (node_ptr) &m_impl.m_head;
@@ -49,10 +49,12 @@ void _skip_list_base<_Key,_Tp,_Maxlevel,_NodeProperty,_Compare,_Alloc>::insert(c
 	if( newLevel > level )
 	{
 		for(int i = level; i < newLevel;++i)
-			update[i] = (_skip_node_data<_Key,_Tp>*) &m_impl.m_head;
+			update[i] = static_cast<node_ptr>(&m_impl.m_head);
+			//update[i] = (_skip_node_data<_Key,_Tp>*) &m_impl.m_head;
 		level = newLevel;
 	}
 
+	//x = _M_create_node(newLevel,std::forward<_Key>(k),std::forward<_Tp>(v));
 	x = _M_create_node(newLevel,k,v);
 	
 	for(int i = 0; i < newLevel;++i)

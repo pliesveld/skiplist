@@ -335,7 +335,8 @@ public:
 	_M_create_node(_Args&&... __args)
 	{
 		node_ptr __node = this->_M_get_node();
-		_m_get_Node_allocator().construct(__node, std::forward<_Args>(__args)...);
+		std::allocator_traits<_Node_alloc_type>::construct(
+			_m_get_Node_allocator(),__node,std::forward<_Args>(__args)...);
 		return __node;
 	}
 
@@ -355,8 +356,17 @@ public:
 		Inserts a new node into the skiplist.  If a node is found
 		with key, its value is replaced with v.
   */
-	void     insert(const _Key &k,const _Tp &v);
+	void     insert(_Key const &k,_Tp const &v);
 	//pair<iterator,bool> insert(const _Key &k, const _Tp &v);
+
+#if 0
+	template<typename... _Args>
+		std::pair<iterator,bool>
+		emplace(_Args&&... _args)
+	{
+		return 
+	}
+#endif
 
 	/*
 		destroys and dellocates the node containing k.
