@@ -35,7 +35,7 @@ using std::map;
 void ClockStart();
 void ClockEnd();
 
-vector<int>* CreateCommonAccessPattern(int size)
+vector<int> CreateCommonAccessPattern(int size)
 {
 	ClockStart();
 	vector<int> idx_vec(size*3);
