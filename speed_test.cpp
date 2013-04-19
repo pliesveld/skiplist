@@ -67,15 +67,20 @@ void ClockEnd()
 	t_end = my_clock::now();
 
 
+	seconds s_duration = duration_cast<seconds>(t_end - t);
 	milliseconds ms_duration = duration_cast<milliseconds>(t_end - t);
 	microseconds us_duration = duration_cast<microseconds>(t_end - t);
 	nanoseconds ns_duration = duration_cast<nanoseconds>(t_end - t);
 
-	if(ms_duration.count() >= 3)
+	if(s_duration.count() >= 50)
+	{
+		cout << s_duration.count() << " ms\n";
+	}
+	else if(ms_duration.count() >= 50)
 	{
 		cout << ms_duration.count() << " ms\n";
 	} else if( us_duration.count() >= 50) {
-		cout << ms_duration.count() << " us\n";
+		cout << us_duration.count() << " us\n";
 	} else {
 		cout << ns_duration.count() << " ns\n";
 	}
