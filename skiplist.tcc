@@ -40,7 +40,7 @@ void _skip_list_base<_Key,_Tp,_Maxlevel,_NodeProperty,_Compare,_Alloc>::insert(_
 	
 	if( x->forward[0] && x->forward[0]->key == k )
 	{
-		x->forward[0]->elem = v;
+		x->forward[0]->elem = std::move(v);
 		return;
 	}
 
@@ -50,7 +50,6 @@ void _skip_list_base<_Key,_Tp,_Maxlevel,_NodeProperty,_Compare,_Alloc>::insert(_
 	{
 		for(int i = level; i < newLevel;++i)
 			update[i] = static_cast<node_ptr>(&m_impl.m_head);
-			//update[i] = (_skip_node_data<_Key,_Tp>*) &m_impl.m_head;
 		level = newLevel;
 	}
 
