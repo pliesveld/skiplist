@@ -1,5 +1,7 @@
 #include "skiplist.hpp"
 #include <cassert>
+#include <cstdio>
+using std::printf;
 
 
 void test_singlenode()
@@ -225,6 +227,16 @@ enum Cntr
 	RVALUE_ASSIGN = 5
 };
 
+char const *Cntr_str[] =
+{
+	"Constructor",
+	"Destructor",
+	"LValue-Ctor",
+	"RValue-Ctor",
+	"LValue-assignment",
+	"RValue-assignment"
+};
+
 static int cnt[6];
 
 void test_custom_types()
@@ -234,27 +246,32 @@ void test_custom_types()
 
 	struct MyData
 	{
-		MyData(int _i) : c(_i) { ++cnt[CTOR]; }
+		MyData(int _i) : c(_i) 
+		{ 
+			++cnt[CTOR]; 
+		}
+
 		MyData(MyData const &rhs)
 			: c(rhs.c), w(rhs.w), data(nullptr)
 		{
+			++cnt[LVALUE_CTOR];
 			if(rhs.data)
 			{
 				data = new int(*rhs.data);
 			}
-			++cnt[LVALUE_CTOR];
-
 		}
 
 		MyData(MyData &&rhs)
+			: c(rhs.c)
 		{
+			++cnt[RVALUE_CTOR];
 			this->data = std::move(rhs.data);
 			rhs.data = 0;
-			++cnt[RVALUE_CTOR];
 		}
 
 		MyData& operator=(MyData const &rhs)
 		{
+			++cnt[LVALUE_ASSIGN];
 			if(this == &rhs)
 				return *this;
 
@@ -262,23 +279,25 @@ void test_custom_types()
 			{
 				data = new int(*rhs.data);
 			}
+			c = rhs.c;
 			return *this;
-			++cnt[LVALUE_ASSIGN];
 		}
 
 		MyData& operator=(MyData &&rhs)
 		{
 			++cnt[RVALUE_ASSIGN];
+			data = rhs.data;
+			rhs.data = 0;
+			c = rhs.c;
 			return *this;
 		}
 
-		virtual ~MyData()
+		virtual ~MyData() 
 		{
 			++cnt[DTOR];
 			if(data)
 				delete data;
 		}
-
 
 		char a[3];
 		int c;
@@ -299,9 +318,34 @@ void test_custom_types()
 			assert(it != l.end());
 			assert(it->c == i);
 		}
+
+
+		l.insert(1,MyData(10));
+		auto it = l.search(1);
+		assert(it != l.end());
+		assert(it->c == 10);
+
+		MyData a_copy(11);
+		l.insert(2,a_copy);
+		a_copy.c = 9;
+		l.insert(0,a_copy);
+
+		for(int i(0);i < 3;++i)
+		{
+			auto it = l.search(i);
+			assert(it != l.end());
+			assert(it->c == i+9);
+		}
+
+		
+		l.insert(4,a_copy);
+
 	}
+
+	printf("MyData Counters:\n");
+	for(int i = 0;i < 6;++i)
+		printf("\t%10s\t%d\n",Cntr_str[i],cnt[i]);
 	
-	assert(cnt[DTOR] == 6);
 }
 
 

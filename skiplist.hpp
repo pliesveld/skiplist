@@ -70,9 +70,11 @@ class _skip_node_data : public _skip_node_base<_Key,_Tp>
 public:
 	typedef _Key key_type;
 	typedef _Tp mapped_type;
-	_skip_node_data(int level,const _Key &k, const _Tp &v) 
+
+	template<typename _Arg1, typename _Arg2>
+	_skip_node_data(int level,_Arg1 &&k, _Arg2 &&v) 
   : _skip_node_base<_Key,_Tp>(level), 
-		key(k), elem(v) { };
+		key(std::forward<_Arg1>(k)), elem(std::forward<_Arg2>(v)) { };
 
 
 #if 0
@@ -268,8 +270,8 @@ protected:
 
 
 /* rebinds for allocator-aware support */
-	typedef typename _Alloc::value_type       _Alloc_value_type;
-	typedef typename _Alloc::template rebind<value_type>::other _Pair_alloc_type;
+//	typedef typename _Alloc::value_type       _Alloc_value_type;
+//	typedef typename _Alloc::template rebind<value_type>::other _Pair_alloc_type;
 	typedef typename _Alloc::template rebind<_skip_node_data<_Key,_Tp> >::other _Node_alloc_type;
 
 	struct _skip_list_impl
@@ -317,6 +319,7 @@ public:
 	_m_get_Node_allocator() const
 	{ return *static_cast<const _Node_alloc_type*>(&this->m_impl); }
 
+protected:
 	node_ptr	
 	_M_get_node()
 	{	return _m_get_Node_allocator().allocate(1); }
@@ -339,6 +342,7 @@ public:
 			_m_get_Node_allocator(),__node,std::forward<_Args>(__args)...);
 		return __node;
 	}
+public:
 
 	/*
 		Erase nodes from the start pos to the end.
@@ -356,7 +360,8 @@ public:
 		Inserts a new node into the skiplist.  If a node is found
 		with key, its value is replaced with v.
   */
-	void     insert(_Key const &k,_Tp const &v);
+	template<typename _Arg1, typename _Arg2>
+	void     insert(_Arg1 &&k,_Arg2 &&v);
 	//pair<iterator,bool> insert(const _Key &k, const _Tp &v);
 
 #if 0
@@ -388,7 +393,7 @@ private:
 	typedef _skip_list_base<_Key,_Tp, _Maxlevel, _NodeProperty, _Compare, _Alloc> 			_Base;
 	typedef _skip_node_data<_Key, _Tp>																	_Node;
 	typedef _skip_node_base<_Key, _Tp>																	_Node_base;
-	typedef typename _Base::_Pair_alloc_type                            _Pair_alloc_type;
+//typedef typename _Base::_Pair_alloc_type                            _Pair_alloc_type;
 
 public:
 
@@ -401,8 +406,8 @@ public:
 // r-value references
 // std::initializer
 
-	typedef _skip_list_iterator<_Key,_Tp> iterator;
-	typedef _skip_list_const_iterator<_Key,_Tp> const_iterator;
+	typedef _skip_list_iterator<_Key,_Tp>        iterator;
+	typedef _skip_list_const_iterator<_Key,_Tp>  const_iterator;
 
 	/* 
 		Default constructor.  Initialize skiplist with zero elements.
