@@ -38,14 +38,14 @@ void ClockEnd();
 vector<int>* CreateCommonAccessPattern(int size)
 {
 	ClockStart();
-	vector<int> *idx_vec = new vector<int>(size*3);
+	vector<int> idx_vec(size*3);
 	
 	std::random_device rd;
 	std::uniform_int_distribution<> uniform_dist(0,size-1);
 
 
 	for(int i(0);i < size*3;++i)
-		idx_vec->push_back(uniform_dist(rd));
+		idx_vec[i] = uniform_dist(rd);
 
 	std::cout << "Create Random Accessing array ";
 	ClockEnd();
@@ -55,6 +55,7 @@ vector<int>* CreateCommonAccessPattern(int size)
 
 typedef std::chrono::high_resolution_clock my_clock;
 my_clock::time_point t;
+my_clock::time_point t_end;
 
 void ClockStart()
 {	
@@ -62,9 +63,24 @@ void ClockStart()
 }
 void ClockEnd()
 { 
-	std::chrono::milliseconds ms_duration = std::chrono::duration_cast<std::chrono::milliseconds>(my_clock::now() - t);
-	cout << ms_duration.count()
-	<< " ms\n";
+	using namespace std::chrono;
+	t_end = my_clock::now();
+
+
+	milliseconds ms_duration = duration_cast<milliseconds>(t_end - t);
+	microseconds us_duration = duration_cast<microseconds>(t_end - t);
+	nanoseconds ns_duration = duration_cast<nanoseconds>(t_end - t);
+
+	if(ms_duration.count() >= 3)
+	{
+		cout << ms_duration.count() << " ms\n";
+	} else if( us_duration.count() >= 50) {
+		cout << ms_duration.count() << " us\n";
+	} else {
+		cout << ns_duration.count() << " ns\n";
+	}
+
+
 }
 
 
@@ -77,7 +93,7 @@ class AccessExperiment
 		skip_list<KEY,VALUE,MLEVEL> skiplist_keys;
 		map<KEY,VALUE>							map_keys;
 
-		vector<int> *access_idx;
+		vector<int> access_idx;
 
 	int size;
 	explicit
@@ -104,7 +120,6 @@ class AccessExperiment
 		ClockEnd();
 	}
 
-	virtual ~AccessExperiment() { delete access_idx; }
 
 
 	void clock_access_fl()
@@ -116,11 +131,11 @@ class AccessExperiment
 			forward_list<int>::iterator it;
 			for(it = fwd_keys.begin();it != fwd_keys.end();++it)
 			{
-				if( *it == (*access_idx)[j] )
+				if( *it == (access_idx)[j] )
 					break;
 			}
 			
-		} while (++j < access_idx->size());
+		} while (++j < access_idx.size());
 		cout << "  forward_list (" << size << "): ";
 		ClockEnd();
 	}
@@ -132,8 +147,8 @@ class AccessExperiment
 		do
 		{
 			skip_list<int,int>::iterator it;
-			it = skiplist_keys.search((*access_idx)[j]);
-		} while (++j < access_idx->size());
+			it = skiplist_keys.search((access_idx)[j]);
+		} while (++j < access_idx.size());
 		cout << "  skip_list (" << size << "): ";
 		ClockEnd();
 	}
@@ -145,8 +160,8 @@ class AccessExperiment
 		do
 		{
 			map<int,int>::iterator it;
-			it = map_keys.find((*access_idx)[j]);
-		} while (++j < access_idx->size());
+			it = map_keys.find((access_idx)[j]);
+		} while (++j < access_idx.size());
 		cout << "  map (" << size << "): ";
 		ClockEnd();
 	}
