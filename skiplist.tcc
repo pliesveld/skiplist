@@ -4,7 +4,7 @@
 
 template<typename _Key,typename _Tp, intmax_t _Maxlevel, typename _NodeProperty, typename _Compare, typename _Alloc >
 
-_skip_node_data<_Key,_Tp>* _skip_list_base<_Key,_Tp,_Maxlevel,_NodeProperty,_Compare,_Alloc>::_impl_search(const _Key &key)
+inline _skip_node_data<_Key,_Tp>* _skip_list_base<_Key,_Tp,_Maxlevel,_NodeProperty,_Compare,_Alloc>::_impl_search(const _Key &key)
 {
 	node_ptr x = (node_ptr) &m_impl.m_head;
 	for(int i = level - 1; i >= 0 && x; --i)
@@ -55,7 +55,6 @@ void _skip_list_base<_Key,_Tp,_Maxlevel,_NodeProperty,_Compare,_Alloc>::insert(_
 		level = newLevel;
 	}
 
-	//x = _M_create_node(newLevel,std::forward<_Key>(k),std::forward<_Tp>(v));
 	x = _M_create_node(newLevel,std::forward<_Arg1>(k),std::forward<_Arg2>(v));
 	
 	for(int i = 0; i < newLevel;++i)

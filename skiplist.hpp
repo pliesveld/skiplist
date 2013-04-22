@@ -77,21 +77,6 @@ public:
 		key(std::forward<_Arg1>(k)), elem(std::forward<_Arg2>(v)) { };
 
 
-#if 0
-	_skip_node_data(int level, _Key &&k, _Tp &&v) 
-  : _skip_node_base<_Key,_Tp>(level), 
-		key(std::forward<_Key>(k)), 
-		elem(std::forward<_Tp>(v)) { };
-#endif
-
-#if 0
-	template<typename... _Args>
-		_skip_node_data(int level, _Args&&... __args) :
-			_skip_node_base<_Key,_Tp>(level), elem(std::forward<_Args>(__args)...) { };
-#endif
-
-
-
 	_Key key;
 	_Tp elem;
 public:
