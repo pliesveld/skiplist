@@ -349,20 +349,13 @@ public:
 	void     insert(_Arg1 &&k,_Arg2 &&v);
 	//pair<iterator,bool> insert(const _Key &k, const _Tp &v);
 
-#if 0
-	template<typename... _Args>
-		std::pair<iterator,bool>
-		emplace(_Args&&... _args)
-	{
-		return 
-	}
-#endif
 
 	/*
 		destroys and dellocates the node containing k.
 		0 returned if no node is found.
   */
 	size_t   erase(const _Key &k);
+	//iterator erase(iterator i);
 
 protected:
 	_Compare m_keycomp;
