@@ -74,7 +74,7 @@ void ClockEnd()
 
 	if(s_duration.count() >= 50)
 	{
-		cout << s_duration.count() << " ms\n";
+		cout << s_duration.count() << " s\n";
 	}
 	else if(ms_duration.count() >= 50)
 	{

@@ -246,17 +246,13 @@ class _skip_list_base
 	typedef _skip_node_data<_Key,_Tp> *       node_ptr;
 	typedef _skip_node_data<_Key,_Tp>         node_type;
 
-  typedef _Compare                          key_compare;
+   typedef _Compare                          key_compare;
 	typedef _Alloc                            allocator_type;
 
 
 	static const _skip_node_height<_NodeProperty>	node_property;
 protected:
 
-
-/* rebinds for allocator-aware support */
-//	typedef typename _Alloc::value_type       _Alloc_value_type;
-//	typedef typename _Alloc::template rebind<value_type>::other _Pair_alloc_type;
 	typedef typename _Alloc::template rebind<_skip_node_data<_Key,_Tp> >::other _Node_alloc_type;
 
 	struct _skip_list_impl
@@ -270,6 +266,10 @@ protected:
 
 		_skip_list_impl(const _Node_alloc_type& __a)
 			: _Node_alloc_type(__a), m_head(_Maxlevel)
+		{ }
+
+		_skip_list_impl(_Node_alloc_type&& __a)
+			: _Node_alloc_type(std::move(__a)), m_head(_Maxlevel)
 		{ }
 	};
 
@@ -290,6 +290,28 @@ public:
 		{
 			this->insert(p->key,p->elem);
 			p = p->forward[0];
+		}
+	}
+
+	_skip_list_base(_skip_list_base&& __lst, const _Node_alloc_type& __a)
+		:	m_impl(__a)
+	{
+		this->level = __lst.level;
+		for(int i(0);i < _Maxlevel;++i)
+		{
+			this->m_impl.m_head.forward[i] = __lst.m_head.forward[i];
+			__lst.m_head.forward[i] = 0;
+		}
+	}
+
+	_skip_list_base(_skip_list_base&& __lst)
+		:	m_impl(std::move(__lst._m_get_Node_allocator()))
+	{
+		this->level = __lst.level;
+		for(int i(0);i < _Maxlevel;++i)
+		{
+			this->m_impl.m_head.forward[i] = __lst.m_head.forward[i];
+			__lst.m_head.forward[i] = 0;
 		}
 	}
 
@@ -347,7 +369,6 @@ public:
   */
 	template<typename _Arg1, typename _Arg2>
 	void     insert(_Arg1 &&k,_Arg2 &&v);
-	//pair<iterator,bool> insert(const _Key &k, const _Tp &v);
 
 
 	/*
@@ -371,7 +392,6 @@ private:
 	typedef _skip_list_base<_Key,_Tp, _Maxlevel, _NodeProperty, _Compare, _Alloc> 			_Base;
 	typedef _skip_node_data<_Key, _Tp>																	_Node;
 	typedef _skip_node_base<_Key, _Tp>																	_Node_base;
-//typedef typename _Base::_Pair_alloc_type                            _Pair_alloc_type;
 
 public:
 
@@ -401,6 +421,9 @@ public:
 	/*
 		Move Constructor
    */
+	skip_list(skip_list&& __list,const _Alloc& __al)
+	: _Base(std::move(__list), _Node_alloc_type(__al))
+	{ }
 
 	/*
 		assignment operator
@@ -418,6 +441,12 @@ public:
 		}
 		return *this;
 	}
+
+	/*
+		RValue assignment operator
+
+		skip_list& operator=(skip_list&& __list)
+	*/
 
 	iterator
 	begin()
